@@ -331,7 +331,7 @@ async function startRun(plan: Plan): Promise<void> {
     return toast(e instanceof Error ? e.message : 'Could not start a run.', true);
   }
   clearHomeTimers();
-  const frame = h('iframe.game', { src: `${start.path}?flash=${start.flash}`, allow: 'autoplay; fullscreen; gamepad; clipboard-write', title: plan.game.name });
+  const frame = h('iframe.game', { src: `${start.path}?flash=${start.flash}`, allow: 'autoplay; fullscreen; gamepad; clipboard-write; screen-wake-lock', title: plan.game.name });
   const timer = h('div.timer', fmtClock(start.limit * 1000));
   const score = h('div.run-score', '0');
   const detail = h('div.run-detail', '');
