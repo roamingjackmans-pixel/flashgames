@@ -143,7 +143,7 @@ function shelf(p: Profile): HTMLElement {
   return h(
     'div.shelf',
     h('div.trophies', h('div.trophy.gold', h('b', String(m.gold)), h('span', '🥇 1st')), h('div.trophy.silver', h('b', String(m.silver)), h('span', '🥈 2nd')), h('div.trophy.bronze', h('b', String(m.bronze)), h('span', '🥉 3rd'))),
-    h('div.counts', h('span', h('b', String(p.stats.played)), ' days played'), h('span', h('b', String(p.stats.streak)), ' day streak')),
+    h('div.counts', h('span', h('b', String(p.stats.played)), p.stats.played === 1 ? ' day played' : ' days played'), h('span', h('b', String(p.stats.streak)), ' day streak')),
     yearView(p),
   );
 }

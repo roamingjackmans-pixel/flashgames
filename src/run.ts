@@ -34,6 +34,8 @@ export class RunController {
   countdownEnds = 0;
   endsAt = 0;
   saved = false;
+  /** the clock when the run stopped (the timer freezes there) */
+  private leftAtStop = 0;
   private synced = -1;
   private syncTimer: unknown = null;
   private endTimer: unknown = null;
@@ -92,7 +94,7 @@ export class RunController {
   timeLeft(): number {
     if (this.phase === 'running') return Math.max(0, this.endsAt - this.deps.now());
     if (this.phase === 'loading' || this.phase === 'countdown') return this.limitS * 1000;
-    return 0;
+    return this.leftAtStop;
   }
 
   /** call often (every animation frame or 250 ms): ends the run when the clock runs out */
@@ -110,6 +112,7 @@ export class RunController {
       return;
     }
     if (this.phase !== 'running') return;
+    this.leftAtStop = Math.max(0, this.endsAt - this.deps.now());
     this.phase = 'ending';
     this.reason = reason;
     this.deps.post({ type: 'end' });
@@ -133,6 +136,7 @@ export class RunController {
 
   private async finish(reason: EndReason): Promise<void> {
     if (this.phase === 'done' || this.phase === 'failed') return;
+    if (this.phase === 'running') this.leftAtStop = Math.max(0, this.endsAt - this.deps.now());
     if (this.endTimer) this.deps.clearTimeout(this.endTimer);
     if (this.syncTimer) this.deps.clearTimeout(this.syncTimer);
     this.phase = 'done';

@@ -904,6 +904,25 @@ input:focus {
   .signin-wrap {
     grid-template-columns: 1fr;
   }
+  /* one column: today's run, then the boards, then the shelf and friends */
+  .home .col {
+    display: contents;
+  }
+  .hero {
+    order: 1;
+  }
+  .today-board {
+    order: 2;
+  }
+  .yesterday {
+    order: 3;
+  }
+  .mine-panel {
+    order: 4;
+  }
+  .friends {
+    order: 5;
+  }
   .pitch h1 {
     font-size: 32px;
   }
