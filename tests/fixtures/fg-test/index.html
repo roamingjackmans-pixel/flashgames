@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FlashRun test game</title>
+    <style>
+      body { margin: 0; height: 100vh; display: grid; place-items: center; background: #102; color: #fff; font: 20px system-ui; }
+      button { font: inherit; padding: 16px 28px; margin: 8px; }
+    </style>
+    <script src="flash-run.js"></script>
+  </head>
+  <body>
+    <!-- A stand-in game for FlashGames' tests: every click is 10 points (100 with the "big" modifier). -->
+    <main>
+      <div id="state">loading</div>
+      <div id="mods"></div>
+      <div>Score: <b id="score">0</b></div>
+      <button id="add" disabled>+10</button>
+      <button id="die" disabled>Die</button>
+      <button id="win" disabled>Win</button>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let score = 0;
+      const step = FlashRun.has('big') ? 100 : 10;
+      $('mods').textContent = FlashRun.active ? 'mods: ' + FlashRun.mods.join(', ') + ' · seed ' + FlashRun.seed : 'not a flash run';
+      const freeze = () => document.querySelectorAll('button').forEach((b) => (b.disabled = true));
+      FlashRun.onEnd(() => {
+        freeze();
+        $('state').textContent = 'time';
+      });
+      setTimeout(async () => {
+        $('state').textContent = 'waiting';
+        await FlashRun.ready();
+        $('state').textContent = 'running';
+        document.querySelectorAll('button').forEach((b) => (b.disabled = false));
+      }, 300);
+      $('add').onclick = () => {
+        score += step;
+        $('score').textContent = score;
+        FlashRun.score(score, score / step + ' clicks');
+      };
+      $('die').onclick = () => {
+        freeze();
+        $('state').textContent = 'dead';
+        FlashRun.over(score, score / step + ' clicks, then died', 'dead');
+      };
+      $('win').onclick = () => {
+        freeze();
+        $('state').textContent = 'won';
+        FlashRun.over(score + 1000, 'won', 'won');
+      };
+    </script>
+  </body>
+</html>

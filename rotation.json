@@ -1,0 +1,77 @@
+{
+  "about": "The games FlashGames can pick from, for the weekly planner (.claude/skills/flashgames-week/SKILL.md). A game is listed here once its FlashGames mode (docs/PROTOCOL.md) is live. notInRotation records games that were looked at and why they are out.",
+  "games": [
+    {
+      "id": "dungeonjoe",
+      "name": "Dungeon Joe",
+      "path": "/games/dungeonjoe/",
+      "source": "C:\\dev\\DungeonJoe",
+      "repo": "roamingjackmans-pixel/games",
+      "flashJson": "public/flash.json",
+      "check": "npm run typecheck; npm run lint; npm test; npm run build",
+      "deploy": "Commit and push main of the games repo (C:\\dev\\DungeonJoe). Its deploy workflow builds Dungeon Joe and republishes the whole /games/ site (about 5 minutes)."
+    },
+    {
+      "id": "infinitehive",
+      "name": "The Infinite Hive",
+      "path": "/games/infinitehive/",
+      "source": "C:\\dev\\Infinite Hive",
+      "repo": null,
+      "flashJson": "flash.json (the live copy is C:\\dev\\DungeonJoe\\deploy\\infinitehive\\flash.json)",
+      "check": "node build.mjs, then a browser check of ?flash= runs",
+      "deploy": "Not a git repo: back up src/ first. Bump VERSION, node build.mjs, copy 'The Infinite Hive.html' to C:\\dev\\DungeonJoe\\deploy\\infinitehive\\index.html and flash.json beside it, then commit and push the games repo."
+    },
+    {
+      "id": "geodegobbler",
+      "name": "Geode Gobbler: the Gobble Saloon",
+      "path": "/games/geodegobbler/",
+      "source": "C:\\dev\\Geodes",
+      "repo": null,
+      "flashJson": "flash.json (the live copy is C:\\dev\\DungeonJoe\\deploy\\geodegobbler\\flash.json)",
+      "check": "node build.mjs, then a browser check of ?flash= runs",
+      "deploy": "Not a git repo: back up src/ first. Bump VERSION, node build.mjs, copy dist/index.html to C:\\dev\\DungeonJoe\\deploy\\geodegobbler\\index.html and flash.json beside it, then commit and push the games repo with a 'Geode Gobbler vX.Y.Z: ...' message."
+    },
+    {
+      "id": "altwhiskerwars",
+      "name": "Alt Whisker Wars",
+      "path": "/games/altwhiskerwars/",
+      "source": "C:\\dev\\AltWhiskerWars",
+      "repo": "roamingjackmans-pixel/altwhiskerwars",
+      "flashJson": "public/flash.json",
+      "check": "the repo's own checks (see its README), then a browser check of ?flash= runs",
+      "deploy": "Push main. Its ready workflow updates the ready branch; the games site picks it up within 10 minutes, or right away with: gh workflow run deploy.yml -R roamingjackmans-pixel/games"
+    },
+    {
+      "id": "smashyourbros",
+      "name": "Smash Your Bros",
+      "path": "/games/smashyourbros/",
+      "source": "C:\\dev\\SmashYourBros",
+      "repo": "roamingjackmans-pixel/smashyourbros",
+      "flashJson": "public/flash.json",
+      "check": "npm run typecheck; npm test; npm run build",
+      "deploy": "Push main. Its ready workflow updates the ready branch; the games site picks it up within 10 minutes, or right away with: gh workflow run deploy.yml -R roamingjackmans-pixel/games"
+    },
+    {
+      "id": "shoallhell",
+      "name": "Shoallhell",
+      "path": "/games/shoallhell/",
+      "source": "C:\\dev\\Shoallhell",
+      "repo": "roamingjackmans-pixel/shoallhell",
+      "flashJson": "public/flash.json",
+      "check": "npm run typecheck; npm test; npm run build",
+      "deploy": "Push main (the page goes out through its ready workflow and the games site). Only when server/ changed: fly deploy in C:\\dev\\Shoallhell (that server also hosts the FlashGames boards)."
+    }
+  ],
+  "notInRotation": [
+    { "id": "cadence", "why": "The owner left it out at launch (2026-11-23). Ask him before adding it." },
+    { "id": "joebrawla", "why": "Not on the games site yet (2026-11-23). Its arcade ladder, Survival and Boss Rush are single-player: add it once it is deployed and fully built." },
+    { "id": "roleplay20", "why": "Social game with no single-player campaign (owner, 2026-11-23)." },
+    { "id": "lieage", "why": "Party game (owner, 2026-11-23)." },
+    { "id": "dontwakegerald", "why": "Party game (owner, 2026-11-23)." },
+    { "id": "horserace", "why": "Party game." },
+    { "id": "thedeck", "why": "Party game." },
+    { "id": "battlecards", "why": "Two players only, no single-player mode." },
+    { "id": "bakersdozen", "why": "Party game." },
+    { "id": "smashyourbros-redirect", "why": "deploy/SmashYourBros and similar capitalised folders are only redirects." }
+  ]
+}

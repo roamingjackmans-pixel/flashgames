@@ -1,0 +1,8 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.log
+# plans are secret until their day: they never go in this (public) repo
+plans/
+*.plans.json
