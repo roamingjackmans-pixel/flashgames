@@ -61,6 +61,9 @@ and that has come true (e.g. JoeBrawla once it's deployed). If one qualifies:
    way that game deploys (`rotation.json` shows how the others do it).
 3. Add it to `rotation.json` (and remove it from `notInRotation`), and commit and push FlashGames.
 4. Don't plan it until its `flash.json` is live.
+5. The FlashGames card on the games page shows the rotation playing in a grid (`C:\dev\DungeonJoe\deploy\previews\montage.py`;
+   its docstring says how). Rebuild it with the new game's recording in place of one of the six, look at a few frames,
+   and commit the two `flashgames*.webp` files to the games repo.
 
 ## 4. Fresh modifiers (2–4 a week)
 
