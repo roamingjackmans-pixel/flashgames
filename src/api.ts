@@ -9,19 +9,23 @@ export interface User {
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 let server = '';
-let loaded = false;
+let serverP: Promise<string> | null = null;
 
-export async function serverBase(): Promise<string> {
-  if (!loaded) {
-    loaded = true;
+/**
+ * Where the server is. Every call shares one look at config.json: the page asks the server several things at once
+ * when it opens, and a call that went ahead before the address arrived would ask josephjackman.com itself (a 404).
+ */
+export function serverBase(): Promise<string> {
+  serverP ??= (async () => {
     try {
       const r = await fetch(`${BASE}/config.json`, { cache: 'no-store' });
       if (r.ok) server = String((await r.json()).server || '').replace(/\/$/, '');
     } catch {
       /* same origin */
     }
-  }
-  return server;
+    return server;
+  })();
+  return serverP;
 }
 
 /** the same key Shoallhell uses, so one sign-in covers every game (?slot=N keeps a separate sign-in, for testing) */
@@ -55,14 +59,14 @@ export class ApiError extends Error {
 }
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-  await serverBase();
+  const base = await serverBase();
   const headers: Record<string, string> = {};
   const tok = getToken();
   if (tok) headers.Authorization = `Bearer ${tok}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   let res: Response;
   try {
-    res = await fetch(`${server}/games/shoallhell/api${path}`, { method, headers, cache: 'no-store', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    res = await fetch(`${base}/games/shoallhell/api${path}`, { method, headers, cache: 'no-store', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
   } catch {
     throw new ApiError('Can’t reach the server. Check your connection.', 0);
   }
