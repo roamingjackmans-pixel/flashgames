@@ -59,7 +59,7 @@
       "repo": "roamingjackmans-pixel/shoallhell",
       "flashJson": "public/flash.json",
       "check": "npm run typecheck; npm test; npm run build",
-      "deploy": "Push main (the page goes out through its ready workflow and the games site). Only when server/ changed: fly deploy in C:\\dev\\Shoallhell (that server also hosts the FlashGames boards)."
+      "deploy": "Push main (the page goes out through its ready workflow and the games site). Only when server/ changed: fly deploy (that server also hosts the FlashGames boards) from a clean worktree of the pushed commit, never the checkout itself, because the Docker build copies the working tree with any uncommitted files: git worktree add --detach <temp> HEAD; then in <temp>: fly deploy --build-arg \"GAME_VERSION=1.0.<commit count> (<short sha>)\" --remote-only; then git worktree remove <temp>."
     }
   ],
   "notInRotation": [
