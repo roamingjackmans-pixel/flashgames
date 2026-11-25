@@ -15,9 +15,10 @@ come back tomorrow for something new.
   day is your score. The game shows its score as you play; it's saved as you go, so closing the tab keeps it.
 - **You vs your friends.** The board shows you and your friends. Same accounts and friends as Shoallhell, Smash Your
   Bros and Baker's Dozen: sign in once, add friends by their 4-digit code.
-- **Medals, forever.** After midnight each day is settled: your place among you and your friends who played. 1st and
-  2nd count when at least two of you played, 3rd when at least three did. Your trophy shelf counts 🥇🥈🥉 forever.
-- **A year of days.** Your shelf (and your friends') shows a year of daily bests as a grid, coloured by place.
+- **Medals, forever.** After midnight each day is settled: your place among you and your friends who played, and the
+  top three get medals (a day none of your friends played is 1st and a gold). Your trophy shelf counts 🥇🥈🥉 forever.
+- **A year of days.** Your shelf (and your friends') shows a year of daily bests as a grid, coloured by place. The
+  "Past days" panel steps through every day you played (or open one from the grid) with that day's board.
 
 ## The rotation
 
@@ -87,7 +88,7 @@ npm run build
 ## Code map
 
 ```
-src/main.ts     sign-in, the day (board, yesterday, trophy shelf, year grid, friends), the run screen
+src/main.ts     sign-in, the day (board, past days, trophy shelf, year grid, friends), the run screen
 src/run.ts      one run: iframe messages, 3-2-1, the clock, saving scores
 src/api.ts      Shoallhell's server (shared accounts) and the /fg endpoints
 sdk/            flash-run.js (copied into every game), its types, make-flash-url.mjs

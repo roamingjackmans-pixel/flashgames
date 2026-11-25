@@ -88,4 +88,42 @@ test('plan, play, board, friends', async ({ browser }) => {
   await expect(a.locator('.modal-card h2')).toHaveText('Bob');
   await expect(a.locator('.modal .recent li')).toContainText(['Test Tuesday']);
   await a.screenshot({ path: 'test-results/e2e-home.png', fullPage: true });
+  await a.locator('.modal .x').click();
+
+  // the next two days: Ann plays the second alone (Bob is her friend but doesn't play), which is 1st and a gold
+  const day = async (): Promise<Record<string, any>> => (await fetch(`${API}/fg/today`)).json();
+  const nextDayAt1am = async (): Promise<void> => {
+    await admin('POST', '/fg/admin/clock', { now: (await day()).endsAt + 60 * 60_000 });
+  };
+  const second = (await day()).date as string;
+  const plan2 = (date: string, title: string) => ({ date, title, game: { id: 'fg-test', name: 'Test Game', goal: 'Click.', scoring: '100 a click with Big.', path: '/games/fg-test/', maxScore: 100000 }, mods: [{ id: 'big', name: 'Big Clicks', text: 'Every click is 100.' }, { id: 'wobble', name: 'Wobble', text: 'Does nothing.' }] });
+  await nextDayAt1am();
+  const d2 = (await day()).date as string;
+  expect(d2 > second).toBe(true);
+  expect((await admin('PUT', '/fg/admin/plans', { plans: [plan2(d2, 'Solo Wednesday')] })).stored).toEqual([d2]);
+  await a.reload();
+  await expect(a.locator('.past .past-when')).toContainText('Yesterday');
+  await expect(a.locator('.past .y-title')).toContainText('Test Tuesday');
+  await expect(a.locator('.past .row .name')).toHaveText(['Bob', 'Ann']);
+  await expect(a.locator('.past .row .place')).toHaveText(['🥇', '🥈']);
+  await play(a, 2, 'end');
+  await nextDayAt1am();
+  await a.reload();
+  await expect(a.locator('.past .y-title')).toContainText('Solo Wednesday');
+  await expect(a.locator('.past .row .name')).toHaveText(['Ann']);
+  await expect(a.locator('.past .row .place')).toHaveText(['🥇']);
+  await expect(a.locator('.trophy.gold b')).toHaveText('1');
+  await expect(a.locator('.trophy.silver b')).toHaveText('1');
+  // step back through the days played, and open one from the year
+  await a.getByRole('button', { name: 'An earlier day' }).click();
+  await expect(a.locator('.past .y-title')).toContainText('Test Tuesday');
+  await expect(a.getByRole('button', { name: 'An earlier day' })).toBeDisabled();
+  await a.getByRole('button', { name: 'A later day' }).click();
+  await expect(a.locator('.past .y-title')).toContainText('Solo Wednesday');
+  await expect(a.locator('.year i.go')).toHaveCount(2);
+  await expect(a.locator('.year i.go').first()).toHaveClass(/silver/);
+  await expect(a.locator('.year i.go').last()).toHaveClass(/gold/);
+  await a.locator('.year i.go').first().click();
+  await expect(a.locator('.past .y-title')).toContainText('Test Tuesday');
+  await a.screenshot({ path: 'test-results/e2e-past.png', fullPage: true });
 });

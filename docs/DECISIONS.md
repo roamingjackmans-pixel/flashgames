@@ -15,8 +15,7 @@ Cadence (owner's choice), JoeBrawla (not deployed yet).
 
 **D4 (2026-11-23) Places among you and your friends** (owner). A day is settled 30 minutes after midnight (late
 scores can still arrive): each player's place among themselves and their friends who played, with friends as they
-are at settling. 1st and 2nd count with at least two players in that circle, 3rd with at least three, so a player
-with no friends can't collect medals alone. Equal scores share a place.
+are at settling. The top three get medals. Equal scores share a place. (Changed 2026-11-25, D11.)
 
 **D5 (2026-11-23) Days change at midnight US Central** (owner), the same for everyone.
 
@@ -28,7 +27,7 @@ replays an earlier day as an encore rather than showing nothing.
 
 **D7 (2026-11-23) Plans are secret until their day.** The repos are public, so plans live in
 `%USERPROFILE%\.flashgames\plans\` and go straight to the server. `/fg/today` shows only today's plan (and
-yesterday's, to signed-in players), and never the seed.
+yesterday's, to signed-in players), `/fg/day` only days that are over, and never the seed.
 
 **D8 (2026-11-23) The server's clock decides the 15 minutes.** A run is made on the server (`POST /fg/runs`), its
 clock starts when the game is loaded and the 3-2-1 is done (`/go`, which must come within 5 minutes), and scores are
@@ -43,3 +42,8 @@ number and a one-line explanation; scores are only compared within a day (one ga
 **D10 (2026-11-23) Hosted on Shoallhell's server**, like Smash Your Bros and Baker's Dozen: shared accounts and
 friends were the requirement, and that server already has them. FlashGames doesn't open a socket (no presence
 needed); the page refreshes the board every 30 seconds.
+
+**D11 (2026-11-25) Playing alone is 1st and a gold** (owner). The first rule (1st and 2nd needed two players in your
+circle, 3rd three) left a player whose friends didn't play that day with nothing; the owner wants a finished run to
+count. The server gave the days settled under the old rule their medals again, once (`medalRule` in `fg/meta.json`).
+The home page's "Past days" panel steps through every day you played, not only yesterday (`GET /fg/day?date=`).

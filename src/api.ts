@@ -109,6 +109,13 @@ export interface Stats {
   played: number;
   streak: number;
 }
+/** a day that is over: its run, and you and your friends on its board (with medals) */
+export interface PastDay {
+  date: string;
+  plan: Plan;
+  players: number;
+  board: Row[];
+}
 export interface Today {
   date: string;
   serverNow: number;
@@ -118,7 +125,7 @@ export interface Today {
   players: number;
   board?: Row[];
   me?: { id: string; name: string; best: number | null; detail: string; runs: number };
-  yesterday?: { date: string; plan: Plan; players: number; board: Row[] };
+  yesterday?: PastDay;
   stats?: Stats;
 }
 export interface DayRecord {
@@ -164,6 +171,7 @@ export const api = {
   logout: () => call<{ ok: boolean }>('POST', '/logout', {}),
   rename: (name: string) => call<{ ok: boolean; user: User }>('POST', '/name', { name }),
   today: () => call<Today>('GET', '/fg/today'),
+  day: (date: string) => call<PastDay>('GET', `/fg/day?date=${encodeURIComponent(date)}`),
   profile: (userId?: string) => call<Profile>('GET', `/fg/profile${userId ? `?user=${encodeURIComponent(userId)}` : ''}`),
   startRun: (date: string) => call<RunStart>('POST', '/fg/runs', { date }),
   go: (run: string) => call<{ ok: boolean; startedAt: number; endsAt: number }>('POST', `/fg/runs/${run}/go`, {}),

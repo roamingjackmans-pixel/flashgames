@@ -1,7 +1,7 @@
 import './style.css';
-import { ApiError, api, getToken, setToken, type DayRecord, type FriendsView, type Plan, type Profile, type Row, type Today } from './api';
+import { ApiError, api, getToken, setToken, type DayRecord, type FriendsView, type PastDay, type Plan, type Profile, type Row, type Today } from './api';
 import { RunController } from './run';
-import { fmtClock, fmtDay, fmtScore, fmtShort, fmtUntil, h, MEDAL_ICON, ordinal, yearGrid } from './util';
+import { fmtClock, fmtDay, fmtScore, fmtShort, fmtUntil, h, MEDAL_ICON, ordinal, shiftDay, yearGrid } from './util';
 
 declare const __GAME_VERSION__: string;
 
@@ -10,6 +10,9 @@ let today: Today | null = null;
 let clockSkew = 0; // server time minus this computer's time
 let friends: FriendsView | null = null;
 let homeTimers: number[] = [];
+let lastMe: Profile | null = null; // your profile as last shown
+let pastSel: string | null = null; // the day the "Past days" panel shows (null: the newest)
+const pastCache = new Map<string, PastDay>(); // days that are over don't change, so each is fetched once
 const serverNow = (): number => Date.now() + clockSkew;
 
 function clearHomeTimers(): void {
@@ -121,7 +124,7 @@ function boardTable(rows: Row[], opts: { medals?: boolean; empty: string; onPick
   );
 }
 
-function yearView(p: Profile): HTMLElement {
+function yearView(p: Profile, onDay?: (date: string) => void): HTMLElement {
   const byDate = new Map<string, DayRecord>(p.days.map((d) => [d.date, d]));
   const cells = yearGrid(p.today);
   const grid = h('div.year');
@@ -130,7 +133,8 @@ function yearView(p: Profile): HTMLElement {
     const cls = c.future ? 'future' : d ? (d.medal ?? (d.place == null && c.date === p.today ? 'live' : 'played')) : 'none';
     const day = c.date.slice(0, 4) === p.today.slice(0, 4) ? fmtDay(c.date) : `${fmtDay(c.date)}, ${c.date.slice(0, 4)}`;
     const tip = d ? `${day} · ${d.name || d.game} · ${fmtScore(d.score)}${d.place ? ` · ${ordinal(d.place)} of ${d.of}` : c.date === p.today ? ' · today' : ''}` : day;
-    grid.append(h('i', { class: `${cls}${c.date === p.today ? ' today' : ''}`, title: tip, style: `grid-column:${c.col + 1};grid-row:${c.row + 1}` }));
+    const open = onDay && d && c.date < p.today ? () => onDay(c.date) : undefined;
+    grid.append(h('i', { class: `${cls}${c.date === p.today ? ' today' : ''}${open ? ' go' : ''}`, title: open ? `${tip} · see the day` : tip, onclick: open, style: `grid-column:${c.col + 1};grid-row:${c.row + 1}` }));
   }
   const wrap = h('div.year-wrap', grid);
   // newest week in view on narrow screens
@@ -138,13 +142,13 @@ function yearView(p: Profile): HTMLElement {
   return h('div', wrap, h('div.legend', h('i.none'), 'no run', h('i.played'), 'played', h('i.bronze'), '3rd', h('i.silver'), '2nd', h('i.gold'), '1st'));
 }
 
-function shelf(p: Profile): HTMLElement {
+function shelf(p: Profile, onDay?: (date: string) => void): HTMLElement {
   const m = p.stats.medals;
   return h(
     'div.shelf',
     h('div.trophies', h('div.trophy.gold', h('b', String(m.gold)), h('span', '🥇 1st')), h('div.trophy.silver', h('b', String(m.silver)), h('span', '🥈 2nd')), h('div.trophy.bronze', h('b', String(m.bronze)), h('span', '🥉 3rd'))),
     h('div.counts', h('span', h('b', String(p.stats.played)), p.stats.played === 1 ? ' day played' : ' days played'), h('span', h('b', String(p.stats.streak)), ' day streak')),
-    yearView(p),
+    yearView(p, onDay),
   );
 }
 
@@ -155,11 +159,28 @@ async function showProfile(userId: string, name: string): Promise<void> {
   document.body.append(modal);
   try {
     const p = await api.profile(userId);
+    const open = (date: string): void => {
+      close();
+      openPast(date);
+    };
     body.replaceChildren(
-      shelf(p),
-      h('h3', 'Recent days'),
+      shelf(p, open),
+      h('h3', 'Their days'),
       p.days.length
-        ? h('ol.recent', ...p.days.slice(0, 14).map((d) => h('li', h('span.when', fmtShort(d.date)), h('span.what', d.title || d.name), h('span.score', fmtScore(d.score)), h('span.place', d.medal ? MEDAL_ICON[d.medal] : d.place ? ordinal(d.place) : ''))))
+        ? h(
+            'ol.recent',
+            ...p.days.map((d) => {
+              const over = d.date < p.today;
+              return h(
+                'li',
+                { class: over ? 'go' : '', title: over ? 'See the day' : 'Today', onclick: over ? () => open(d.date) : undefined },
+                h('span.when', fmtShort(d.date)),
+                h('span.what', d.title || d.name),
+                h('span.score', fmtScore(d.score)),
+                h('span.place', d.medal ? MEDAL_ICON[d.medal] : d.place ? ordinal(d.place) : ''),
+              );
+            }),
+          )
         : h('div.empty', 'No runs yet.'),
     );
   } catch (e) {
@@ -205,6 +226,8 @@ function friendsPanel(view: FriendsView, rerender: () => void): HTMLElement {
 
 async function home(): Promise<void> {
   clearHomeTimers();
+  pastSel = null;
+  pastCache.clear();
   if (!getToken()) return signIn();
   app.replaceChildren(h('div.page', h('header.top', logo()), h('main.loading', 'Loading today’s run…')));
   let t: Today;
@@ -236,7 +259,70 @@ async function home(): Promise<void> {
   );
 }
 
+/** the days that are over that the "Past days" panel steps through, newest first: every day you played, yesterday,
+ * and a day opened from a friend's year */
+function pastDates(t: Today, me: Profile): string[] {
+  const s = new Set(me.days.map((d) => d.date).filter((d) => d < t.date));
+  if (t.yesterday) s.add(t.yesterday.date);
+  if (pastSel && pastSel < t.date) s.add(pastSel);
+  return [...s].sort().reverse();
+}
+
+function pastPanel(t: Today, me: Profile): HTMLElement | null {
+  if (t.yesterday) pastCache.set(t.yesterday.date, t.yesterday);
+  const dates = pastDates(t, me);
+  if (!dates.length) return null;
+  const panel = h('section.panel.past');
+  const show = (date: string): void => {
+    pastSel = date;
+    const i = dates.indexOf(date);
+    const older = dates[i + 1];
+    const newer = dates[i - 1];
+    const when = date === shiftDay(t.date, -1) ? `Yesterday · ${fmtShort(date)}` : fmtDay(date);
+    const body = h('div.past-body');
+    panel.replaceChildren(
+      h('h2', 'Past days'),
+      h(
+        'div.past-nav',
+        h('button.nav', { type: 'button', disabled: !older, 'aria-label': 'An earlier day', title: older ? fmtDay(older) : undefined, onclick: () => older && show(older) }, '◀'),
+        h('div.past-when', { 'aria-live': 'polite' }, when),
+        h('button.nav', { type: 'button', disabled: !newer, 'aria-label': 'A later day', title: newer ? fmtDay(newer) : undefined, onclick: () => newer && show(newer) }, '▶'),
+      ),
+      body,
+    );
+    const fill = (d: PastDay): void =>
+      body.replaceChildren(
+        h('div.y-title', h('b', d.plan.game.name), ` · ${d.plan.title}`),
+        modStickers(d.plan, true),
+        boardTable(d.board, { medals: true, empty: 'Nobody here played that day.', onPick: (r) => void showProfile(r.userId, r.name) }),
+      );
+    const have = pastCache.get(date);
+    if (have) return fill(have);
+    body.replaceChildren(h('div.muted', 'Loading…'));
+    api
+      .day(date)
+      .then((d) => {
+        pastCache.set(date, d);
+        if (pastSel === date) fill(d);
+      })
+      .catch((e) => {
+        if (pastSel === date) body.replaceChildren(h('div.err', e instanceof Error ? e.message : 'Could not load that day.'), h('button.btn.small', { onclick: () => show(date) }, 'Try again'));
+      });
+  };
+  show(pastSel && dates.includes(pastSel) ? pastSel : dates[0]!);
+  return panel;
+}
+
+/** show a day that is over in the "Past days" panel */
+function openPast(date: string): void {
+  if (!today || !lastMe) return;
+  pastSel = date;
+  renderHome(today, lastMe);
+  document.querySelector('.panel.past')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function renderHome(t: Today, me: Profile): void {
+  lastMe = me;
   const plan = t.plan;
   const countdown = h('span.count', '');
   const tickCountdown = (): void => {
@@ -275,16 +361,7 @@ function renderHome(t: Today, me: Profile): void {
     h('div.muted.small', `${t.players} ${t.players === 1 ? 'player' : 'players'} on the server today`),
     boardTable(t.board ?? [], { empty: 'Nobody here has played yet. Be first.', onPick: (r) => void showProfile(r.userId, r.name) }),
   );
-  const y = t.yesterday;
-  const yPanel = y
-    ? h(
-        'section.panel.yesterday',
-        h('h2', `Yesterday · ${fmtShort(y.date)}`),
-        h('div.y-title', h('b', y.plan.game.name), ` · ${y.plan.title}`),
-        modStickers(y.plan, true),
-        boardTable(y.board, { medals: true, empty: 'Nobody here played yesterday.', onPick: (r) => void showProfile(r.userId, r.name) }),
-      )
-    : null;
+  const past = pastPanel(t, me);
 
   const nameBtn = h('button.link.me-name', { title: 'Change your name', onclick: async () => {
     const n = prompt('Your name on the boards', me.user.name);
@@ -310,7 +387,7 @@ function renderHome(t: Today, me: Profile): void {
         setToken('');
         signIn();
       } }, 'Sign out'))),
-      h('main.home', h('div.col.main-col', hero, h('section.panel.mine-panel', h('h2', 'Your trophy shelf'), shelf(me))), h('div.col.side-col', boardPanel, yPanel, friends ? friendsPanel(friends, rerender) : null)),
+      h('main.home', h('div.col.main-col', hero, h('section.panel.mine-panel', h('h2', 'Your trophy shelf'), shelf(me, openPast))), h('div.col.side-col', boardPanel, past, friends ? friendsPanel(friends, rerender) : null)),
       h('footer.foot', `FlashGames ${__GAME_VERSION__} · One run a day, as many tries as you like, best score counts. Days change at midnight US Central.`),
     ),
   );

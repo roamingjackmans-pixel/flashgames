@@ -523,6 +523,35 @@ input:focus {
 .y-title {
   margin: 4px 0 0;
 }
+.past-nav {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.past-nav .nav {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: rgba(10, 8, 40, 0.45);
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+}
+.past-nav .nav:hover:not(:disabled) {
+  border-color: var(--zap);
+}
+.past-nav .nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.past-when {
+  text-align: center;
+  font: 900 16px/1.2 var(--display);
+  color: var(--sun);
+}
 
 /* ------------------------------------------------------------ trophy shelf and year */
 .trophies {
@@ -610,6 +639,13 @@ input:focus {
 }
 .year i.today {
   outline: 2px solid var(--zap);
+  outline-offset: 1px;
+}
+.year i.go {
+  cursor: pointer;
+}
+.year i.go:hover {
+  outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
 .legend {
@@ -720,6 +756,12 @@ input:focus {
 .recent .score {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+.recent li.go {
+  cursor: pointer;
+}
+.recent li.go:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .toast {
@@ -914,7 +956,7 @@ input:focus {
   .today-board {
     order: 2;
   }
-  .yesterday {
+  .past {
     order: 3;
   }
   .mine-panel {
