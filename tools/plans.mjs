@@ -104,8 +104,10 @@ async function fill(short) {
       }
     if (new Set(mods).size !== mods.length) problems.push(`${where}: a modifier twice`);
     if (!p.title) problems.push(`${where}: no title`);
+    // the day before, if this file plans it (the file can skip days, or hold days a week apart)
     const prev = sorted[i - 1];
-    if (prev && (typeof prev.game === 'string' ? prev.game : prev.game?.id) === id) warnings.push(`${where}: ${id} two days running`);
+    const dayBefore = new Date(Date.parse(`${p.date}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    if (prev && prev.date === dayBefore && (typeof prev.game === 'string' ? prev.game : prev.game?.id) === id) warnings.push(`${where}: ${id} two days running`);
     full.push({
       date: p.date,
       title: p.title,
