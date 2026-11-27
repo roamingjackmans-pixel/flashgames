@@ -60,6 +60,16 @@
       "flashJson": "public/flash.json",
       "check": "npm run typecheck; npm test; npm run build",
       "deploy": "Push main (the page goes out through its ready workflow and the games site). Only when server/ changed: fly deploy (that server also hosts the FlashGames boards) from a clean worktree of the pushed commit, never the checkout itself, because the Docker build copies the working tree with any uncommitted files: git worktree add --detach <temp> HEAD; then in <temp>: fly deploy --build-arg \"GAME_VERSION=1.0.<commit count> (<short sha>)\" --remote-only; then git worktree remove <temp>."
+    },
+    {
+      "id": "scaredyloafs",
+      "name": "Scaredy Loafs",
+      "path": "/games/scaredyloafs/",
+      "source": "C:\\dev\\ScaredyLoafs",
+      "repo": "roamingjackmans-pixel/scaredyloafs",
+      "flashJson": "public/flash.json",
+      "check": "npm run typecheck; npm test; npm run build; npx playwright test tests/e2e/flash.spec.ts",
+      "deploy": "Push main. Its ready workflow updates the ready branch; the games site picks it up within 10 minutes, or right away with: gh workflow run deploy.yml -R roamingjackmans-pixel/games"
     }
   ],
   "notInRotation": [
